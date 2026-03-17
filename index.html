@@ -157,6 +157,7 @@
 
     <div class="nav-section">Reports</div>
     <div class="nav-item" onclick="showPage('review')"><span class="nav-icon">&#9881;</span> Weekly review</div>
+    <div class="nav-item" onclick="showPage('vara')"><span class="nav-icon">&#9888;</span> VARA tracker</div>
 
     <div class="sidebar-footer">
       <div class="brain-stats" id="sidebarStats">Loading stats...</div>
@@ -221,7 +222,7 @@ function showPage(page) {
   currentPage = page;
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   event.target.closest('.nav-item').classList.add('active');
-  const pages = { dashboard: renderDashboard, search: renderSearch, capture: renderCapture, thoughts: renderThoughts, stakeholders: renderStakeholders, actions: renderActions, review: renderReview };
+  const pages = { dashboard: renderDashboard, search: renderSearch, capture: renderCapture, thoughts: renderThoughts, stakeholders: renderStakeholders, actions: renderActions, review: renderReview, vara: renderVara };
   if (pages[page]) pages[page]();
 }
 
@@ -453,6 +454,22 @@ async function generateReview(days) {
 }
 
 // ============================================
+// --- VARA TRACKER ---
+async function renderVara() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">VARA tracker</div>
+      <div class="page-desc">Virtual Asset Regulatory Authority — compliance status and deadlines</div>
+    </div>
+    <div class="card" id="varaContent"><div class="loading">Loading VARA data...</div></div>
+  `;
+  try {
+    const results = await callBrain('search_thoughts', { query: 'VARA compliance regulatory license', limit: 20 });
+    renderThoughtList('varaContent', results);
+  } catch (err) { document.getElementById('varaContent').innerHTML = '<div class="empty">Error: ' + err.message + '</div>'; }
+}
+
 // RENDERERS
 // ============================================
 
