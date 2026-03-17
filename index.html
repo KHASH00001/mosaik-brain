@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOSAIK — Open Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b; --bg2: #111113; --bg3: #1a1a1d; --bg4: #222226;
+    --border: #2a2a2e; --border2: #333338;
+    --text: #e8e6e3; --text2: #9a9894; --text3: #5f5e5a;
+    --accent: #7F77DD; --accent2: #AFA9EC; --accent-bg: rgba(127,119,221,0.08);
+    --green: #1D9E75; --green-bg: rgba(29,158,117,0.08);
+    --amber: #EF9F27; --amber-bg: rgba(239,159,39,0.08);
+    --red: #E24B4A; --red-bg: rgba(226,75,74,0.08);
+    --coral: #D85A30; --coral-bg: rgba(216,90,48,0.08);
+    --teal: #1D9E75; --pink: #D4537E;
+    --radius: 12px; --radius-sm: 8px;
+    --font: 'DM Sans', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 240px; background: var(--bg2); border-right: 1px solid var(--border); padding: 24px 16px; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 10; }
+  .main { margin-left: 240px; flex: 1; padding: 32px; max-width: 1100px; }
+
+  /* Sidebar */
+  .logo { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+  .logo-dot { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; }
+  .logo-sub { font-size: 11px; color: var(--text3); margin-bottom: 32px; font-weight: 400; }
+  .nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text3); margin: 20px 0 8px; font-weight: 500; }
+  .nav-item { padding: 9px 12px; border-radius: var(--radius-sm); font-size: 13.5px; color: var(--text2); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 10px; font-weight: 400; }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: var(--accent-bg); color: var(--accent2); font-weight: 500; }
+  .nav-icon { width: 16px; text-align: center; font-size: 14px; opacity: 0.7; }
+  .sidebar-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+  .brain-stats { font-size: 11px; color: var(--text3); line-height: 1.8; }
+  .brain-stats strong { color: var(--text2); font-weight: 500; }
+
+  /* Page header */
+  .page-header { margin-bottom: 28px; }
+  .page-title { font-size: 24px; font-weight: 600; letter-spacing: -0.5px; }
+  .page-desc { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+  /* Cards */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 14px; font-weight: 500; }
+
+  /* Search */
+  .search-container { position: relative; margin-bottom: 24px; }
+  .search-input { width: 100%; padding: 14px 16px 14px 42px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 14px; font-family: var(--font); outline: none; transition: border 0.2s; }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text3); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; }
+  .search-hint { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--text3); background: var(--bg4); padding: 2px 8px; border-radius: 4px; font-family: var(--mono); }
+
+  /* Capture */
+  .capture-area { display: flex; gap: 10px; margin-bottom: 24px; }
+  .capture-input { flex: 1; padding: 12px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 14px; font-family: var(--font); outline: none; resize: none; min-height: 44px; max-height: 120px; transition: border 0.2s; }
+  .capture-input:focus { border-color: var(--green); }
+  .capture-input::placeholder { color: var(--text3); }
+  .capture-btn { padding: 12px 20px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; font-family: var(--font); transition: all 0.15s; }
+  .capture-btn:hover { background: #6b63c7; }
+  .capture-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Stat cards */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+  .stat-value { font-size: 28px; font-weight: 600; letter-spacing: -1px; font-family: var(--mono); }
+  .stat-label { font-size: 11px; color: var(--text3); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-card.purple .stat-value { color: var(--accent); }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.amber .stat-value { color: var(--amber); }
+  .stat-card.red .stat-value { color: var(--red); }
+
+  /* Thought list */
+  .thought-item { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .thought-item:last-child { border-bottom: none; }
+  .thought-content { font-size: 13.5px; line-height: 1.6; color: var(--text); }
+  .thought-meta { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+  .tag.type { background: var(--accent-bg); color: var(--accent2); }
+  .tag.project { background: var(--green-bg); color: var(--green); }
+  .tag.layer { background: var(--amber-bg); color: var(--amber); }
+  .tag.priority-critical { background: var(--red-bg); color: var(--red); }
+  .tag.priority-high { background: var(--coral-bg); color: var(--coral); }
+  .tag.date { color: var(--text3); font-size: 11px; font-family: var(--mono); }
+  .tag.similarity { background: var(--accent-bg); color: var(--accent); font-family: var(--mono); }
+
+  /* Stakeholder list */
+  .stakeholder-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .stakeholder-item:last-child { border-bottom: none; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .avatar.board { background: var(--accent-bg); color: var(--accent2); }
+  .avatar.partner { background: var(--green-bg); color: var(--green); }
+  .avatar.vendor { background: var(--amber-bg); color: var(--amber); }
+  .avatar.contractor { background: var(--coral-bg); color: var(--coral); }
+  .avatar.regulator { background: var(--red-bg); color: var(--red); }
+  .stakeholder-info { flex: 1; min-width: 0; }
+  .stakeholder-name { font-size: 13.5px; font-weight: 500; }
+  .stakeholder-role { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .stakeholder-tier { font-size: 10px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; }
+  .stakeholder-tier.strategic { background: var(--accent-bg); color: var(--accent2); }
+  .stakeholder-tier.operational { background: var(--green-bg); color: var(--green); }
+
+  /* Action items */
+  .action-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .action-item:last-child { border-bottom: none; }
+  .action-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .action-dot.critical { background: var(--red); }
+  .action-dot.high { background: var(--coral); }
+  .action-dot.medium { background: var(--amber); }
+  .action-dot.low { background: var(--text3); }
+  .action-text { font-size: 13px; line-height: 1.5; color: var(--text); }
+  .action-project { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* Two column layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* Loading & empty states */
+  .loading { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+  .empty { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+  .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; z-index: 100; animation: slideIn 0.3s ease; }
+  .toast.success { background: var(--green); color: #fff; }
+  .toast.error { background: var(--red); color: #fff; }
+  @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 16px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo"><span class="logo-dot"></span> MOSAIK</div>
+    <div class="logo-sub">Open Brain</div>
+
+    <div class="nav-section">Brain</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">&#9673;</span> Dashboard</div>
+    <div class="nav-item" onclick="showPage('search')"><span class="nav-icon">&#8981;</span> Search</div>
+    <div class="nav-item" onclick="showPage('capture')"><span class="nav-icon">&#10010;</span> Capture</div>
+    <div class="nav-item" onclick="showPage('thoughts')"><span class="nav-icon">&#9783;</span> All thoughts</div>
+
+    <div class="nav-section">People</div>
+    <div class="nav-item" onclick="showPage('stakeholders')"><span class="nav-icon">&#9823;</span> Stakeholders</div>
+    <div class="nav-item" onclick="showPage('actions')"><span class="nav-icon">&#9745;</span> Action items</div>
+
+    <div class="nav-section">Reports</div>
+    <div class="nav-item" onclick="showPage('review')"><span class="nav-icon">&#9881;</span> Weekly review</div>
+
+    <div class="sidebar-footer">
+      <div class="brain-stats" id="sidebarStats">Loading stats...</div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main" id="mainContent">
+    <div class="loading">Connecting to brain...</div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script>
+const API = "https://ddmdlzkurkmpepggeyxr.supabase.co/functions/v1/open-brain-mcp?key=56ce1fd5497b2e1424c42a5dd7400f2386eb989c3c4175512ec15d28e91bb7e6";
+
+let currentPage = 'dashboard';
+let cachedStats = null;
+let cachedThoughts = null;
+let cachedStakeholders = null;
+
+async function callBrain(tool, params = {}) {
+  const res = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tool, params })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data.result;
+}
+
+function showToast(msg, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function getInitials(name) {
+  return name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+// ============================================
+// PAGES
+// ============================================
+
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event.target.closest('.nav-item').classList.add('active');
+  const pages = { dashboard: renderDashboard, search: renderSearch, capture: renderCapture, thoughts: renderThoughts, stakeholders: renderStakeholders, actions: renderActions, review: renderReview };
+  if (pages[page]) pages[page]();
+}
+
+// --- DASHBOARD ---
+async function renderDashboard() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-desc">MOSAIK institutional knowledge at a glance</div>
+    </div>
+    <div class="stats-grid" id="statsGrid"><div class="loading">Loading...</div></div>
+    <div class="search-container">
+      <span class="search-icon">&#8981;</span>
+      <input class="search-input" id="dashSearch" placeholder="Search your brain... (try 'VARA compliance' or 'financial model')" onkeydown="if(event.key==='Enter')dashboardSearch()">
+      <span class="search-hint">Enter</span>
+    </div>
+    <div id="dashSearchResults"></div>
+    <div class="two-col">
+      <div class="card"><div class="card-title">Recent thoughts</div><div id="recentThoughts"><div class="loading">Loading...</div></div></div>
+      <div class="card"><div class="card-title">Stakeholders</div><div id="dashStakeholders"><div class="loading">Loading...</div></div></div>
+    </div>
+  `;
+  loadDashboardData();
+}
+
+async function loadDashboardData() {
+  try {
+    const [statsRaw, recentRaw, stakeholdersRaw, actionsRaw] = await Promise.all([
+      callBrain('stats'), callBrain('browse_recent', { limit: 5 }),
+      callBrain('search_stakeholders', {}), callBrain('find_action_items', {})
+    ]);
+
+    // Parse stats
+    const thoughtMatch = statsRaw.match(/Brain: (\d+) thoughts/);
+    const contactMatch = statsRaw.match(/Stakeholders: (\d+)/);
+    const actionMatch = statsRaw.match(/(\d+) action items/);
+    const thoughts = thoughtMatch ? thoughtMatch[1] : '—';
+    const contacts = contactMatch ? contactMatch[1] : '—';
+    const actions = actionMatch ? actionMatch[1] : '0';
+
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card purple"><div class="stat-value">${thoughts}</div><div class="stat-label">Thoughts</div></div>
+      <div class="stat-card green"><div class="stat-value">${contacts}</div><div class="stat-label">Stakeholders</div></div>
+      <div class="stat-card amber"><div class="stat-value">${actions}</div><div class="stat-label">Action items</div></div>
+      <div class="stat-card red"><div class="stat-value">3</div><div class="stat-label">Edge functions</div></div>
+    `;
+    document.getElementById('sidebarStats').innerHTML = `<strong>${thoughts}</strong> thoughts<br><strong>${contacts}</strong> stakeholders<br><strong>3</strong> edge functions`;
+
+    // Recent thoughts
+    renderThoughtList('recentThoughts', recentRaw);
+
+    // Stakeholders
+    renderStakeholderList('dashStakeholders', stakeholdersRaw);
+
+  } catch (err) { showToast('Error loading dashboard: ' + err.message, 'error'); }
+}
+
+async function dashboardSearch() {
+  const query = document.getElementById('dashSearch').value.trim();
+  if (!query) return;
+  const container = document.getElementById('dashSearchResults');
+  container.innerHTML = '<div class="card"><div class="loading">Searching by meaning...</div></div>';
+  try {
+    const results = await callBrain('search_thoughts', { query, limit: 8 });
+    container.innerHTML = '<div class="card"><div class="card-title">Search results for "' + escapeHtml(query) + '"</div><div id="searchResultsList"></div></div>';
+    renderThoughtList('searchResultsList', results, true);
+  } catch (err) { container.innerHTML = '<div class="card"><div class="empty">Search error: ' + err.message + '</div></div>'; }
+}
+
+// --- SEARCH ---
+function renderSearch() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">Search</div>
+      <div class="page-desc">Semantic search — finds by meaning, not exact words</div>
+    </div>
+    <div class="search-container">
+      <span class="search-icon">&#8981;</span>
+      <input class="search-input" id="searchInput" placeholder="What are you looking for?" onkeydown="if(event.key==='Enter')doSearch()">
+      <span class="search-hint">Enter</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="tag type" style="cursor:pointer;border:none" onclick="document.getElementById('searchInput').value='VARA compliance requirements';doSearch()">VARA compliance</button>
+      <button class="tag project" style="cursor:pointer;border:none" onclick="document.getElementById('searchInput').value='technology stack decisions';doSearch()">Tech stack</button>
+      <button class="tag layer" style="cursor:pointer;border:none" onclick="document.getElementById('searchInput').value='financial projections revenue';doSearch()">Financials</button>
+      <button class="tag type" style="cursor:pointer;border:none" onclick="document.getElementById('searchInput').value='board decisions priorities';doSearch()">Board</button>
+      <button class="tag project" style="cursor:pointer;border:none" onclick="document.getElementById('searchInput').value='partnership agreements custody';doSearch()">Partnerships</button>
+    </div>
+    <div id="searchResults"><div class="empty">Type a question and press Enter. Try natural language — "why did we choose XRPL?"</div></div>
+  `;
+}
+
+async function doSearch() {
+  const query = document.getElementById('searchInput').value.trim();
+  if (!query) return;
+  document.getElementById('searchResults').innerHTML = '<div class="loading">Searching by meaning...</div>';
+  try {
+    const results = await callBrain('search_thoughts', { query, limit: 10, threshold: 0.3 });
+    renderThoughtList('searchResults', results, true);
+  } catch (err) { document.getElementById('searchResults').innerHTML = '<div class="empty">Error: ' + err.message + '</div>'; }
+}
+
+// --- CAPTURE ---
+function renderCapture() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">Capture</div>
+      <div class="page-desc">Save a thought — it gets embedded, classified, and stored automatically</div>
+    </div>
+    <div class="card">
+      <textarea class="capture-input" id="captureText" rows="4" placeholder="What's on your mind? Decisions, meeting notes, ideas, research findings..." style="width:100%;margin-bottom:12px"></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--text3)">Cmd+Enter to save</span>
+        <button class="capture-btn" id="captureBtn" onclick="doCapture()">Save to brain</button>
+      </div>
+    </div>
+    <div id="captureHistory"></div>
+  `;
+  document.getElementById('captureText').addEventListener('keydown', function(e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); doCapture(); }
+  });
+  document.getElementById('captureText').focus();
+}
+
+async function doCapture() {
+  const input = document.getElementById('captureText');
+  const btn = document.getElementById('captureBtn');
+  const content = input.value.trim();
+  if (!content) return;
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const result = await callBrain('capture_thought', { content, source: 'web-dashboard' });
+    showToast('Captured: ' + result.split('\n')[0]);
+    const history = document.getElementById('captureHistory');
+    history.innerHTML = '<div class="card"><div class="card-title">Just captured</div><div class="thought-item"><div class="thought-content">' + escapeHtml(content) + '</div><div class="thought-meta"><span class="tag type">' + escapeHtml(result.split('\n')[0]) + '</span></div></div></div>' + history.innerHTML;
+    input.value = '';
+  } catch (err) { showToast('Error: ' + err.message, 'error'); }
+  btn.disabled = false; btn.textContent = 'Save to brain';
+  input.focus();
+}
+
+// --- ALL THOUGHTS ---
+async function renderThoughts() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">All thoughts</div>
+      <div class="page-desc">Everything in the brain, newest first</div>
+    </div>
+    <div class="card" id="allThoughts"><div class="loading">Loading thoughts...</div></div>
+  `;
+  try {
+    const results = await callBrain('browse_recent', { limit: 50 });
+    renderThoughtList('allThoughts', results);
+  } catch (err) { document.getElementById('allThoughts').innerHTML = '<div class="empty">Error: ' + err.message + '</div>'; }
+}
+
+// --- STAKEHOLDERS ---
+async function renderStakeholders() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">Stakeholders</div>
+      <div class="page-desc">Board members, partners, contractors, and regulators</div>
+    </div>
+    <div class="search-container">
+      <span class="search-icon">&#8981;</span>
+      <input class="search-input" id="stakeholderSearch" placeholder="Search stakeholders..." onkeydown="if(event.key==='Enter')doStakeholderSearch()">
+    </div>
+    <div class="card" id="stakeholderList"><div class="loading">Loading...</div></div>
+  `;
+  try {
+    const results = await callBrain('search_stakeholders', {});
+    renderStakeholderList('stakeholderList', results);
+  } catch (err) { document.getElementById('stakeholderList').innerHTML = '<div class="empty">Error: ' + err.message + '</div>'; }
+}
+
+async function doStakeholderSearch() {
+  const query = document.getElementById('stakeholderSearch').value.trim();
+  document.getElementById('stakeholderList').innerHTML = '<div class="loading">Searching...</div>';
+  try {
+    const results = await callBrain('search_stakeholders', { query: query || undefined });
+    renderStakeholderList('stakeholderList', results);
+  } catch (err) { document.getElementById('stakeholderList').innerHTML = '<div class="empty">Error: ' + err.message + '</div>'; }
+}
+
+// --- ACTION ITEMS ---
+async function renderActions() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">Action items</div>
+      <div class="page-desc">Open tasks across all brain captures, sorted by priority</div>
+    </div>
+    <div class="card" id="actionList"><div class="loading">Loading action items...</div></div>
+  `;
+  try {
+    const results = await callBrain('find_action_items', {});
+    renderActionList('actionList', results);
+  } catch (err) { document.getElementById('actionList').innerHTML = '<div class="empty">Error: ' + err.message + '</div>'; }
+}
+
+// --- WEEKLY REVIEW ---
+async function renderReview() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div class="page-header">
+      <div class="page-title">Weekly review</div>
+      <div class="page-desc">Clusters recent thoughts, surfaces patterns, flags stale items</div>
+    </div>
+    <div style="margin-bottom:16px">
+      <button class="capture-btn" onclick="generateReview(7)">Last 7 days</button>
+      <button class="capture-btn" style="background:var(--bg4);color:var(--text2);margin-left:8px" onclick="generateReview(14)">Last 14 days</button>
+      <button class="capture-btn" style="background:var(--bg4);color:var(--text2);margin-left:8px" onclick="generateReview(30)">Last 30 days</button>
+    </div>
+    <div class="card" id="reviewContent"><div class="empty">Click a time range to generate the review</div></div>
+  `;
+}
+
+async function generateReview(days) {
+  document.getElementById('reviewContent').innerHTML = '<div class="loading">Generating review for last ' + days + ' days...</div>';
+  try {
+    const result = await callBrain('weekly_review', { days });
+    document.getElementById('reviewContent').innerHTML = '<pre style="white-space:pre-wrap;font-size:13px;line-height:1.8;color:var(--text);font-family:var(--font)">' + escapeHtml(result) + '</pre>';
+  } catch (err) { document.getElementById('reviewContent').innerHTML = '<div class="empty">Error: ' + err.message + '</div>'; }
+}
+
+// ============================================
+// RENDERERS
+// ============================================
+
+function renderThoughtList(containerId, rawText, showSimilarity = false) {
+  const container = document.getElementById(containerId);
+  if (!rawText || rawText === 'No thoughts found.' || rawText === 'No matching thoughts found.') {
+    container.innerHTML = '<div class="empty">No thoughts found</div>';
+    return;
+  }
+  const entries = rawText.split('\n\n').filter(e => e.trim());
+  let html = '';
+  entries.forEach(entry => {
+    const lines = entry.split('\n').map(l => l.trim());
+    const headerMatch = lines[0]?.match(/\[(.+?)\]\s*\((.+?)\)\s*(.*)/);
+    const date = headerMatch ? headerMatch[1] : '';
+    const type = headerMatch ? headerMatch[2].split(']')[0].replace('[','') : '';
+    const similarity = headerMatch && headerMatch[3] ? headerMatch[3] : '';
+
+    let content = '';
+    let id = '';
+    let actions = '';
+    lines.forEach(l => {
+      if (l.startsWith('ID:')) id = l.replace('ID:', '').trim();
+      else if (l.startsWith('Actions:')) actions = l.replace('Actions:', '').trim();
+      else if (!l.startsWith('[') && !l.startsWith('ID:')) content += l + ' ';
+    });
+    content = content.trim();
+    if (!content && lines.length > 1) content = lines.slice(1).find(l => !l.startsWith('ID:') && !l.startsWith('Actions:')) || '';
+
+    html += '<div class="thought-item">';
+    html += '<div class="thought-content">' + escapeHtml(content) + '</div>';
+    html += '<div class="thought-meta">';
+    if (type) html += '<span class="tag type">' + escapeHtml(type) + '</span>';
+    if (date) html += '<span class="tag date">' + escapeHtml(date) + '</span>';
+    if (showSimilarity && similarity) html += '<span class="tag similarity">' + escapeHtml(similarity) + '</span>';
+    html += '</div></div>';
+  });
+  container.innerHTML = html || '<div class="empty">No thoughts found</div>';
+}
+
+function renderStakeholderList(containerId, rawText) {
+  const container = document.getElementById(containerId);
+  if (!rawText || rawText === 'No stakeholders found.') {
+    container.innerHTML = '<div class="empty">No stakeholders found</div>';
+    return;
+  }
+  const entries = rawText.split('\n\n').filter(e => e.trim());
+  let html = '';
+  entries.forEach(entry => {
+    const lines = entry.split('\n').map(l => l.trim());
+    const nameMatch = lines[0]?.match(/^(.+?)\s*—\s*(.+?)(?:\s*@\s*(.+))?$/);
+    const name = nameMatch ? nameMatch[1] : lines[0] || 'Unknown';
+    const role = nameMatch ? nameMatch[2] : '';
+    const org = nameMatch ? (nameMatch[3] || '') : '';
+
+    let type = 'other', tier = '';
+    lines.forEach(l => {
+      const typeMatch = l.match(/Type:\s*(\w+)/);
+      const tierMatch = l.match(/Tier:\s*(\w+)/);
+      if (typeMatch) type = typeMatch[1];
+      if (tierMatch) tier = tierMatch[1];
+    });
+
+    const avatarClass = type === 'board_member' ? 'board' : type === 'partner' ? 'partner' : type === 'vendor' ? 'vendor' : type === 'contractor' ? 'contractor' : type === 'regulator' ? 'regulator' : 'board';
+
+    html += '<div class="stakeholder-item">';
+    html += '<div class="avatar ' + avatarClass + '">' + getInitials(name) + '</div>';
+    html += '<div class="stakeholder-info"><div class="stakeholder-name">' + escapeHtml(name) + '</div>';
+    html += '<div class="stakeholder-role">' + escapeHtml(role) + (org ? ' — ' + escapeHtml(org) : '') + '</div></div>';
+    if (tier) html += '<span class="stakeholder-tier ' + tier + '">' + escapeHtml(tier) + '</span>';
+    html += '</div>';
+  });
+  container.innerHTML = html || '<div class="empty">No stakeholders found</div>';
+}
+
+function renderActionList(containerId, rawText) {
+  const container = document.getElementById(containerId);
+  if (!rawText || rawText === 'No open action items.') {
+    container.innerHTML = '<div class="empty">No open action items. Nice work.</div>';
+    return;
+  }
+  const entries = rawText.split('\n\n').filter(e => e.trim());
+  let html = '';
+  entries.forEach(entry => {
+    const lines = entry.split('\n').map(l => l.trim());
+    const headerMatch = lines[0]?.match(/\[(\w+)\]\s*(.+)/);
+    const priority = headerMatch ? headerMatch[1] : 'medium';
+    const header = headerMatch ? headerMatch[2] : lines[0];
+
+    let actions = '', context = '';
+    lines.forEach(l => {
+      if (l.startsWith('Actions:')) actions = l.replace('Actions:', '').trim();
+      else if (l.startsWith('From:')) context = l.replace('From:', '').trim();
+    });
+
+    html += '<div class="action-item">';
+    html += '<div class="action-dot ' + priority + '"></div>';
+    html += '<div><div class="action-text">' + escapeHtml(actions || header) + '</div>';
+    if (context) html += '<div class="action-project">' + escapeHtml(context) + '</div>';
+    html += '</div></div>';
+  });
+  container.innerHTML = html || '<div class="empty">No action items found</div>';
+}
+
+// ============================================
+// INIT
+// ============================================
+renderDashboard();
+</script>
+</body>
+</html>
