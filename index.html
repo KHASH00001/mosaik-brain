@@ -173,7 +173,7 @@
 <div id="toastContainer"></div>
 
 <script>
-const API = "https://ddmdlzkurkmpepggeyxr.supabase.co/functions/v1/open-brain-mcp?key=56ce1fd5497b2e1424c42a5dd7400f2386eb989c3c4175512ec15d28e91bb7e6";
+const urlKey = new URLSearchParams(window.location.search).get('key'); const API = "https://ddmdlzkurkmpepggeyxr.supabase.co/functions/v1/open-brain-mcp?key=" + (urlKey || "56ce1fd5497b2e1424c42a5dd7400f2386eb989c3c4175512ec15d28e91bb7e6");
 
 let currentPage = 'dashboard';
 let cachedStats = null;
